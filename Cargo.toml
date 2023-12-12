@@ -11,3 +11,21 @@ actix-web = "4.4.0"
 env_logger = "0.10.0"
 chrono = { version = "0.4.23", features = ["serde"] }
 serde = { version = "1.0.190", features = ["derive"] }
+dotenv = "0.15.0"
+anyhow = "1.0.75"
+sea-orm = {version = "0.12.4", features = ["sqlx-postgres", "runtime-async-std-native-tls", "macros"]}
+async-graphql = {version = "6.0.11", features = ["decimal", "chrono", "dataloader", "dynamic-schema"] }
+async-graphql-actix-web = "6.0.11"
+seaography = {version = "0.3.0", features = ["with-decimal", "with-chrono"]}
+
+entity = {path="./entity"}
+lazy_static = "1.4.0"
+
+[profile.release]
+debug = true
+
+[workspace]
+members = [
+    "migration",
+    "entity"
+]

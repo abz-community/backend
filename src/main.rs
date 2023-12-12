@@ -1,23 +1,24 @@
-use actix_web::middleware::Logger;
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
-use serde::Serialize;
-pub mod model;
+use crate::graphql::schema::AppSchema;
+use actix_web::{App, HttpResponse, HttpServer};
+use actix_web::{
+    guard,
+    web::{self, Data},
+};
+use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
+use graphql::schema::build_schema;
 
-#[derive(Serialize)]
-pub struct GenericResponse {
-    pub status: String,
-    pub message: String,
+pub mod database;
+pub mod graphql;
+
+async fn graphql_handler(schema: Data<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
+    schema.execute(req.into_inner()).await.into()
 }
 
-#[get("/api/healthchecker")]
-async fn health_checker_handler() -> impl Responder {
-    const MESSAGE: &str = "Build Simple CRUD API with Rust and Actix Web";
-
-    let response_json = &GenericResponse {
-        status: "success".to_string(),
-        message: MESSAGE.to_string(),
-    };
-    HttpResponse::Ok().json(response_json)
+async fn graphql_playground() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(playground_source(GraphQLPlaygroundConfig::new("/")))
 }
 
 #[actix_web::main]
@@ -27,14 +28,18 @@ async fn main() -> std::io::Result<()> {
     }
     env_logger::init();
 
-    println!("🚀 Server started successfully");
-
+    let schema_data = build_schema().await;
     HttpServer::new(move || {
         App::new()
-            .service(health_checker_handler)
-            .wrap(Logger::default())
+            .app_data(Data::new(schema_data.clone()))
+            .service(web::resource("/").guard(guard::Post()).to(graphql_handler))
+            .service(
+                web::resource("/")
+                    .guard(guard::Get())
+                    .to(graphql_playground),
+            )
     })
-    .bind(("127.0.0.1", 8000))?
+    .bind(("127.0.0.1", 8080))?
     .run()
     .await
 }

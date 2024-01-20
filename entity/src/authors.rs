@@ -10,9 +10,8 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub name: String,
-    pub surname: String,
-    #[sea_orm(column_type = "Text")]
-    pub bio: String,
+    #[sea_orm(column_type = "Text", nullable)]
+    pub bio: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -34,8 +33,9 @@ impl Entity {
         Self::find().filter(Column::Id.eq(id))
     }
 
-    pub fn find_by_surname(surname: &str) -> Select<Entity> {
-        Self::find().filter(Column::Surname.eq(surname))
+    pub fn find_by_name(surname: &str) -> Select<Entity> {
+        // TODO add matching pattern
+        Self::find().filter(Column::Name.eq(surname))
     }
 
     pub fn delete_by_id(id: i32) -> DeleteMany<Entity> {

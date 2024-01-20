@@ -21,11 +21,19 @@ seaography = {version = "0.3.0", features = ["with-decimal", "with-chrono"]}
 entity = {path="./entity"}
 lazy_static = "1.4.0"
 
+epub = "2.1.1"
+scraper = "0.18.1"
+tokio = {version = "1.35.0", features=["fs"]}
+futures = "0.3.29"
+regex = "1.10.2"
+html_parser = " 0.7.0"
+
 [profile.release]
 debug = true
 
 [workspace]
 members = [
     "migration",
-    "entity"
+    "entity",
+    "parsing"
 ]

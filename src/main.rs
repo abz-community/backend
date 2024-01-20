@@ -1,15 +1,16 @@
 use crate::graphql::schema::AppSchema;
-use actix_web::{App, HttpResponse, HttpServer};
 use actix_web::{
     guard,
     web::{self, Data},
 };
+use actix_web::{App, HttpResponse, HttpServer};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql::schema::build_schema;
 
 pub mod database;
 pub mod graphql;
+pub mod local_storage;
 
 async fn graphql_handler(schema: Data<AppSchema>, req: GraphQLRequest) -> GraphQLResponse {
     schema.execute(req.into_inner()).await.into()

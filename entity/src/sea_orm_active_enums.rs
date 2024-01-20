@@ -2,6 +2,7 @@
 
 use async_graphql::Enum;
 use sea_orm::entity::prelude::*;
+use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Enum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "genre")]
@@ -14,4 +15,18 @@ pub enum Genre {
     It,
     #[sea_orm(string_value = "non_fiction")]
     NonFiction,
+}
+
+impl FromStr for Genre {
+    type Err = anyhow::Error;
+
+    fn from_str(input: &str) -> Result<Genre, Self::Err> {
+        match input {
+            "biology" => Ok(Genre::Biology),
+            "fiction" => Ok(Genre::Fiction),
+            "it" => Ok(Genre::It),
+            "nonfiction" => Ok(Genre::NonFiction),
+            _ => Err(anyhow::anyhow!("Cannot parse incoming genre")),
+        }
+    }
 }

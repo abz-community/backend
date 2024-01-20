@@ -1,67 +1,15 @@
-# based on
-# https://kerkour.com/rust-small-docker-image
+FROM rust:lastest as build
 
-####################################################################################################
-## Cargo Chef
-####################################################################################################
-# --platform=linux/amd64 
-FROM rust:latest AS chef
-
-RUN cargo install cargo-chef 
-
-WORKDIR /app
-
-FROM chef AS planner
-
-COPY . .
-
-RUN cargo chef prepare  --recipe-path recipe.json
-
-####################################################################################################
-## Builder
-####################################################################################################
-FROM chef AS builder
-
-RUN rustup target add x86_64-unknown-linux-musl
 RUN apt update && apt install -y musl-tools musl-dev pkg-config libssl-dev librust-openssl-sys-dev
-RUN update-ca-certificates
+RUN rustup target add x86_64-unknown-linux-musl
 
-# Create appuser
-ENV USER=nonroot
-ENV UID=10001
-
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/nonexistent" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    --uid "${UID}" \
-    "${USER}"
-
-COPY --from=planner /app/recipe.json recipe.json
-# Build dependencies - this is the caching Docker layer!
-RUN cargo chef cook --release --recipe-path recipe.json
-
+WORKDIR /usr/src/api-service
 COPY . .
 
-RUN cargo build --target x86_64-unknown-linux-musl --release
+RUN RUSTFLAGS=-Clinker=musl-gcc cargo install -—release —target=x86_64-unknown-linux-musl
 
-####################################################################################################
-## Final image
-####################################################################################################
-FROM scratch AS runtime
+FROM alpine:latest
 
-# Import from builder.
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
+COPY --from=build /usr/local/cargo/bin/api-service /usr/local/bin/api-service
 
-WORKDIR /app
-
-# Copy our build
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/to_do-axtix ./
-
-# Use an unprivileged user.
-USER nonroot:nonroot
-
-CMD ["/app/to_do-axtix"]
+CMD ["api-service"]

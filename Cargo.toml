@@ -17,9 +17,12 @@ sea-orm = {version = "0.12.4", features = ["sqlx-postgres", "runtime-async-std-n
 async-graphql = {version = "6.0.11", features = ["decimal", "chrono", "dataloader", "dynamic-schema"] }
 async-graphql-actix-web = "6.0.11"
 seaography = {version = "0.3.0", features = ["with-decimal", "with-chrono"]}
+openssl = { version = "0.10.35", features = ["vendored"] }
+log = "0.4.20"
 
 
 entity = {path="./entity"}
+migration = {path="./migration"}
 lazy_static = "1.4.0"
 
 epub = "2.1.1"

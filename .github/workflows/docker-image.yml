@@ -3,14 +3,23 @@ name: Deploy backend
 on:
   push:
     branches: [ "main" ]
-    
+
 env:
   POSTGRES_USER: root
   POSTGRES_PASSWORD: root
+  DB_NAME: abz
 
 jobs:
+  prepare-environment:
+    runs-on: self-hosted 
+    steps:
+      - name: Stop and remove containers, networks
+        run: docker-compose rm -s -v api
+      - name: Remove unused data
+        run: docker system prune -a -f
   deploy:
     runs-on: self-hosted
+    needs: prepare-environment
     steps:
       - name: checkout repo
         uses: actions/checkout@v3

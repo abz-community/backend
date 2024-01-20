@@ -1,5 +1,5 @@
 use sea_orm::{EnumIter, Iterable};
-use sea_orm_migration::prelude::*;
+use sea_orm_migration::{prelude::*, sea_query::extension::postgres::{TypeCreateStatement, TypeDropStatement}};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -49,6 +49,14 @@ impl MigrationTrait for Migration {
                     .to_owned(),
             )
             .await?;
+        let mut type_statement = TypeCreateStatement::new();
+        let type_statement = type_statement.as_enum(Genre::Type).values([
+            Genre::Biology,
+            Genre::Fiction,
+            Genre::IT,
+            Genre::NonFiction,
+        ]);
+        manager.create_type(type_statement.to_owned()).await?;
         manager
             .create_table(
                 Table::create()
@@ -74,7 +82,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Books::ShortView).text().not_null())
                     .col(
                         ColumnDef::new(Books::Genre)
-                            .enumeration(Genre::Table, Genre::iter().skip(1))
+                            .enumeration(Genre::Type, Genre::iter().skip(1))
                             .not_null(),
                     )
                     .col(
@@ -196,6 +204,10 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(Table::drop().table(Users::Table).to_owned())
             .await?;
+        let mut type_drop = TypeDropStatement::new();
+        manager
+            .drop_type(type_drop.name(Genre::Type).to_owned())
+            .await?;
         Ok(())
     }
 }
@@ -256,7 +268,7 @@ enum Reads {
 
 #[derive(Iden, EnumIter)]
 pub enum Genre {
-    Table,
+    Type,
     Fiction,
     NonFiction,
     Biology,

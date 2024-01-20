@@ -3,6 +3,10 @@ name: Deploy backend
 on:
   push:
     branches: [ "main" ]
+    
+env:
+  POSTGRES_USER: root
+  POSTGRES_PASSWORD: root
 
 jobs:
   deploy:

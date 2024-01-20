@@ -18,6 +18,7 @@ async-graphql = {version = "6.0.11", features = ["decimal", "chrono", "dataloade
 async-graphql-actix-web = "6.0.11"
 seaography = {version = "0.3.0", features = ["with-decimal", "with-chrono"]}
 
+
 entity = {path="./entity"}
 lazy_static = "1.4.0"
 

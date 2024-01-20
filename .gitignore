@@ -3,4 +3,5 @@
 js_test_queries
 test
 books
+.env
 parsing

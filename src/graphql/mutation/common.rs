@@ -38,7 +38,11 @@ impl CommonMutation {
                 name: Set(data.author),
                 ..Default::default()
             };
-            author.insert(db.get_connection()).await.map_err(|e|anyhow::anyhow!("Error adding author: {e}"))?.id
+            author
+                .insert(db.get_connection())
+                .await
+                .map_err(|e| anyhow::anyhow!("Error adding author: {e}"))?
+                .id
         };
 
         let book = books::ActiveModel {
@@ -51,6 +55,9 @@ impl CommonMutation {
             ..Default::default()
         };
 
-        Ok(book.insert(db.get_connection()).await.map_err(|e|anyhow::anyhow!("Error adding book: {e}"))?)
+        Ok(book
+            .insert(db.get_connection())
+            .await
+            .map_err(|e| anyhow::anyhow!("Error adding book: {e}"))?)
     }
 }

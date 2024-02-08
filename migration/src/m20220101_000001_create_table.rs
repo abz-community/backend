@@ -1,5 +1,8 @@
 use sea_orm::{EnumIter, Iterable};
-use sea_orm_migration::{prelude::*, sea_query::extension::postgres::{TypeCreateStatement, TypeDropStatement}};
+use sea_orm_migration::{
+    prelude::*,
+    sea_query::extension::postgres::{TypeCreateStatement, TypeDropStatement},
+};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;

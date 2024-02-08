@@ -3,8 +3,6 @@ use dotenv::dotenv;
 use epub::doc::EpubDoc;
 use futures::future::join_all;
 use html_parser::{Dom, Node};
-use regex::Regex;
-use scraper::Html;
 use std::{
     fs::{create_dir_all, File},
     path::PathBuf,

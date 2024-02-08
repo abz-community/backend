@@ -16,7 +16,6 @@ pub struct CreateAuthorInput {
 pub struct UpdateAuthorInput {
     pub id: i32,
     pub name: Option<String>,
-    pub surname: Option<String>,
     pub bio: Option<String>,
 }
 

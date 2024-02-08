@@ -1,8 +1,8 @@
 use crate::graphql::schema::AppSchema;
+use actix_cors::Cors;
 use actix_web::{
     guard,
     web::{self, Data},
-    Route,
 };
 use actix_web::{App, HttpResponse, HttpServer};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
@@ -33,16 +33,15 @@ async fn hello() -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "actix_web=info");
+        std::env::set_var("RUST_LOG", "main");
     }
     env_logger::init();
     info!("Initializing schema");
-    println!("Initializing schema");
     let schema_data = build_schema().await;
     info!("Db Ok");
-    println!("DbOk");
-    let server = HttpServer::new(move || {
+    HttpServer::new(move || {
         App::new()
+            .wrap(Cors::permissive())
             .app_data(Data::new(schema_data.clone()))
             .service(hello)
             .service(web::resource("/").guard(guard::Post()).to(graphql_handler))
@@ -52,11 +51,7 @@ async fn main() -> std::io::Result<()> {
                     .to(graphql_playground),
             )
     })
-    .bind(("0.0.0.0", 8080)).map_err(|e| {
-        println!("{}", e);
-        e
-    });
-    println!("{:?}", server.as_ref().err());
-    server?.run()
+    .bind(("0.0.0.0", 8080))?
+    .run()
     .await
 }

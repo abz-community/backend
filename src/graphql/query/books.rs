@@ -1,8 +1,9 @@
 use crate::database::DB;
 use async_graphql;
 use async_graphql::{Context, Object, Result};
+use entity::authors::Relation;
 use entity::books;
-use sea_orm::EntityTrait;
+use sea_orm::{EntityTrait, JoinType, QuerySelect, RelationTrait};
 
 #[derive(Default)]
 pub struct BooksQuery;
@@ -13,6 +14,7 @@ impl BooksQuery {
         let db = ctx.data::<DB>().unwrap();
 
         Ok(books::Entity::find()
+            .join(JoinType::InnerJoin, Relation::Books.def())
             .all(db.get_connection())
             .await
             .map_err(|e| e.to_string())?)

@@ -2,7 +2,7 @@ use async_graphql::{Context, Object, Result, Upload};
 use entity::async_graphql::{self, InputObject, SimpleObject};
 use entity::sea_orm::{ActiveModelTrait, Set};
 use entity::sea_orm_active_enums::Genre;
-use entity::{authors, books};
+use entity::{authors, books, reads};
 use std::str::FromStr;
 
 use crate::database::DB;
@@ -12,6 +12,16 @@ use crate::local_storage::LocalStorage;
 pub struct DeleteResult {
     pub success: bool,
     pub rows_affected: u64,
+}
+
+#[derive(SimpleObject)]
+pub struct ReadOpts {
+    pub user_id: i32,
+    pub book_id: i32,
+    pub page: u64,
+    pub symbol: u64,
+    pub amount_to_send: u64,
+    pub time_to_send: u64,
 }
 
 #[derive(Default)]
@@ -60,4 +70,18 @@ impl CommonMutation {
             .await
             .map_err(|e| anyhow::anyhow!("Error adding book: {e}"))?)
     }
+
+    // pub async fn start_reading(&self, ctx: &Context<'_>, opts: ReadOpts) -> Result<reads::Model> {
+    //     let db = ctx.data::<DB>()?;
+    //     reads::ActiveModel {
+    //         book_id: Set(opts.book_id),
+    //         user_id: Set(opts.user_id),
+    //         page: Set(1),
+    //         symbol: Set(0),
+    //         amount_to_send: Set(0),
+    //         time_to_send: Set(0),
+    //         ..Default::default()
+    //     };
+    //     Ok()
+    // }
 }

@@ -12,13 +12,11 @@ impl DB {
     pub async fn init() -> Result<Self, sea_orm::DbErr> {
         dotenv().ok();
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-        let pool = Database::connect(database_url).await;
-        println!("{:?}", pool);
-        let pool = pool?;
-        // Migrator::up(&pool, None).await.map_err(|e| {
-        //     println!("{}", e);
-        //     e
-        // })?;
+        let pool = Database::connect(database_url).await?;
+        Migrator::up(&pool, None).await.map_err(|e| {
+            println!("{}", e);
+            e
+        })?;
         Ok(DB { pool })
     }
 

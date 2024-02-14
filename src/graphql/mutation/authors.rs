@@ -2,14 +2,17 @@ use async_graphql::{Context, Object, Result};
 use entity::async_graphql::{self, InputObject, SimpleObject};
 use entity::authors;
 use entity::sea_orm::{ActiveModelTrait, Set};
+use sea_orm::IntoActiveModel;
 
 use crate::database::DB;
+
+use super::to_active;
 
 #[derive(InputObject)]
 pub struct CreateAuthorInput {
     pub name: String,
     pub surname: String,
-    pub bio: String,
+    pub bio: Option<String>,
 }
 
 #[derive(InputObject)]
@@ -39,7 +42,7 @@ impl AuthorMutation {
 
         let author = authors::ActiveModel {
             name: Set(input.name),
-            bio: Set(Some(input.bio)),
+            bio: Set(input.bio),
             ..Default::default()
         };
 
@@ -55,14 +58,16 @@ impl AuthorMutation {
         let author: Option<authors::Model> = authors::Entity::find_by_id(input.id)
             .one(db.get_connection())
             .await?;
-        let mut author: authors::ActiveModel = author.unwrap().into();
-        if let Some(name) = input.name {
-            author.name = Set(name.to_owned());
+        if let Some(author) = author {
+            let mut author = author.into_active_model();
+            author.name = to_active(input.name.to_owned());
+            author.bio = to_active(Some(input.bio.to_owned()));
+            Ok(author.update(db.get_connection()).await?)
+        } else {
+            Err(async_graphql::Error::new(
+                "Cannot update non existing instance",
+            ))
         }
-        if let Some(bio) = input.bio {
-            author.bio = Set(Some(bio.to_owned()));
-        }
-        Ok(author.update(db.get_connection()).await?)
     }
 
     pub async fn delete_author(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteAuthorResult> {

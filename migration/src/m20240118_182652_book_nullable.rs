@@ -7,22 +7,16 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         // Replace the sample below with your own migration scripts
-        todo!();
+        // todo!();
 
         manager
-            .create_table(
-                Table::create()
-                    .table(Post::Table)
-                    .if_not_exists()
-                    .col(
-                        ColumnDef::new(Post::Id)
-                            .integer()
-                            .not_null()
-                            .auto_increment()
-                            .primary_key(),
-                    )
-                    .col(ColumnDef::new(Post::Title).string().not_null())
-                    .col(ColumnDef::new(Post::Text).string().not_null())
+            .alter_table(
+                Table::alter()
+                    .table(Reads::Table)
+                    .add_column(ColumnDef::new(Reads::SendTimeout).integer().not_null())
+                    .modify_column(ColumnDef::new(Reads::TimeToSend).time().not_null())
+                    .drop_column(Reads::Page)
+                    .add_column(ColumnDef::new(Reads::Chapter).integer())
                     .to_owned(),
             )
             .await
@@ -30,18 +24,29 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         // Replace the sample below with your own migration scripts
-        todo!();
-
         manager
-            .drop_table(Table::drop().table(Post::Table).to_owned())
+            .alter_table(
+                Table::alter()
+                    .table(Reads::Table)
+                    .drop_column(Reads::SendTimeout)
+                    .modify_column(ColumnDef::new(Reads::TimeToSend).date_time().not_null())
+                    .to_owned(),
+            )
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum Post {
+enum Reads {
     Table,
     Id,
-    Title,
-    Text,
+    BookId,
+    UserId,
+    Chapter,
+    Page,
+    Symbol,
+    TimeToSend,
+    SendTimeout,
+    AmountToSend,
+    Finished,
 }

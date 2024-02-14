@@ -11,7 +11,7 @@ use std::{
         Arc,
     },
 };
-use tokio::fs::File as TokioFile;
+use tokio::{fs::File as TokioFile, io::{AsyncReadExt, AsyncSeekExt}};
 use tokio::io::AsyncWriteExt;
 use tokio::task::JoinHandle;
 
@@ -22,7 +22,7 @@ pub struct FileData {
 }
 
 pub struct LocalStorage {
-    path: PathBuf,
+    path: String,
     page_length: usize,
 }
 
@@ -32,7 +32,7 @@ impl LocalStorage {
         let path = std::env::var("LOCAL_STORAGE_PATH").expect("LOCAL_STORAGE_PATH must be set");
         let page_length = std::env::var("PAGE_LENGTH").expect("PAGE_LENGTH must be set");
         Self {
-            path: PathBuf::from(path),
+            path,
             page_length: page_length.parse().unwrap(),
         }
     }
@@ -53,7 +53,7 @@ impl LocalStorage {
             EpubDoc::from_reader(file).map_err(|e| anyhow::anyhow!("Parsing error: {e}"))?;
         let title = doc.mdata("title").context("No title")?;
         let author = doc.mdata("creator").context("No author")?;
-        let path = Arc::new(format!("./books/{}_{}", author, title));
+        let path = Arc::new(format!("{}/{} {}", self.path, author, title));
         // TODO add normalization of chunks by summaring last chunk to given page_length
         // let arbitary = String::new();
         let id_counter = AtomicUsize::new(0);
@@ -82,6 +82,7 @@ impl LocalStorage {
         })
     }
 
+    // TODO rewrite to save bytes
     async fn save_chapter(count: usize, text: String, path: Arc<String>) -> anyhow::Result<()> {
         let dom = Dom::parse(&text)?;
         let text = dom
@@ -107,9 +108,16 @@ impl LocalStorage {
         }
     }
 
-    pub fn read_from(&self, book_path: String, chapter: u32, from_char: u32) -> String {
-        todo!()
-        // read associated file +- 1 to get exactly what we need
+    // TODO rewrite to file.seek()
+    pub async fn read_from(
+        &self,
+        book_path: String,
+        chapter: i32,
+        from_char: i32,
+        amount: usize,
+    ) -> anyhow::Result<String> {
+        let text = tokio::fs::read_to_string(format!("{}/{}/{}.txt", self.path, book_path, chapter)).await?;
+        Ok(text[from_char as usize..amount].to_string())
     }
 
     async fn write_chunk(path: Arc<String>, id: usize, chunk: String) -> anyhow::Result<()> {

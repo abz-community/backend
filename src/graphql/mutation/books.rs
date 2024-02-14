@@ -3,9 +3,12 @@ use entity::async_graphql::{self, InputObject, SimpleObject};
 use entity::books;
 use entity::sea_orm::{ActiveModelTrait, Set};
 use entity::sea_orm_active_enums::Genre;
+use sea_orm::IntoActiveModel;
 use std::str::FromStr;
 
 use crate::database::DB;
+
+use super::to_active;
 
 #[derive(InputObject)]
 pub struct CreateBookInput {
@@ -46,7 +49,7 @@ impl BookMutation {
     ) -> Result<books::Model> {
         let db = ctx.data::<DB>()?;
 
-        let author = books::ActiveModel {
+        let book = books::ActiveModel {
             author_id: Set(input.author_id),
             title: Set(input.title),
             book_path: Set(input.book_path),
@@ -56,7 +59,7 @@ impl BookMutation {
             ..Default::default()
         };
 
-        Ok(author.insert(db.get_connection()).await?)
+        Ok(book.insert(db.get_connection()).await?)
     }
 
     pub async fn update_book(
@@ -68,26 +71,21 @@ impl BookMutation {
         let book: Option<books::Model> = books::Entity::find_by_id(input.id)
             .one(db.get_connection())
             .await?;
-        let mut book: books::ActiveModel = book.unwrap().into();
-        if let Some(author_id) = input.author_id {
-            book.author_id = Set(author_id.to_owned());
+        if let Some(book) = book {
+            let genre = input.genre.map(|v| Genre::from_str(&v).ok()).flatten();
+            let mut book = book.into_active_model();
+            book.author_id = to_active(input.author_id);
+            book.title = to_active(input.title);
+            book.book_path = to_active(input.book_path);
+            book.rating = to_active(input.rating);
+            book.short_view = to_active(input.short_view);
+            book.genre = to_active(genre);
+            Ok(book.update(db.get_connection()).await?)
+        } else {
+            Err(async_graphql::Error::new(
+                "Cannot update non existing instance",
+            ))
         }
-        if let Some(title) = input.title {
-            book.title = Set(title.to_owned());
-        }
-        if let Some(book_path) = input.book_path {
-            book.book_path = Set(book_path.to_owned());
-        }
-        if let Some(rating) = input.rating {
-            book.rating = Set(rating.to_owned());
-        }
-        if let Some(short_view) = input.short_view {
-            book.short_view = Set(short_view.to_owned());
-        }
-        if let Some(genre) = input.genre {
-            book.genre = Set(Genre::from_str(&genre)?);
-        }
-        Ok(book.update(db.get_connection()).await?)
     }
 
     pub async fn delete_book(&self, ctx: &Context<'_>, id: i32) -> Result<DeleteBookResult> {
